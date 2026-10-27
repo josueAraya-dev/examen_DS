@@ -2,4 +2,16 @@ node_modules
 dist
 .env
 .env.local
+.env.*.local
 .DS_Store
+Thumbs.db
+
+# Bitácoras de npm
+*.log
+
+# Editores
+.vscode
+.idea
+
+# Reportes de pruebas
+coverage
