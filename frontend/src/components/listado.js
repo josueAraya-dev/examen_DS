@@ -34,8 +34,53 @@ export const formatearFecha = (iso) =>
  *  - Deshabilite #btn-anterior en la primera página y #btn-siguiente en la última.
  *  - Si falla, muestre el error con mostrarMensaje("error", ...).
  */
+const crearTarjeta = (equipo) => {
+  const $tarjeta = $plantilla.content.cloneNode(true).querySelector(".tarjeta");
+  $tarjeta.setAttribute("data-id", equipo.id);
+
+  $tarjeta.querySelector(".codigo").textContent = equipo.codigo;
+  $tarjeta.querySelector(".nombre").textContent = equipo.nombre;
+  $tarjeta.querySelector(".categoria").textContent = equipo.categoria.nombre;
+  $tarjeta.querySelector(".fecha").textContent = formatearFecha(equipo.fecha_adquisicion);
+
+  const $estado = $tarjeta.querySelector(".estado");
+  $estado.textContent = equipo.estado;
+  $estado.setAttribute("data-estado", equipo.estado);
+
+  return $tarjeta;
+};
+
+const crearVacio = () => {
+  const $vacio = document.createElement("li");
+  $vacio.classList.add("vacio");
+  $vacio.textContent = "No hay equipos registrados.";
+  return $vacio;
+};
+
+const actualizarPaginacion = ({ from, to, total, current_page, last_page }) => {
+  paginaActual = current_page;
+  ultimaPagina = last_page;
+
+  $resumen.textContent = `Mostrando ${from}–${to} de ${total}`;
+  $paginaActual.textContent = `Página ${current_page} de ${last_page}`;
+  $btnAnterior.disabled = paginaActual <= 1;
+  $btnSiguiente.disabled = paginaActual >= ultimaPagina;
+};
+
 export const cargarPagina = async (pagina = 1) => {
-  // TODO
+  $lista.setAttribute("aria-busy", "true");
+
+  try {
+    const { data, meta } = await listarEquipos(pagina, POR_PAGINA);
+    const elementos = data.length > 0 ? data.map(crearTarjeta) : [crearVacio()];
+
+    $lista.replaceChildren(...elementos);
+    actualizarPaginacion(meta);
+  } catch (error) {
+    mostrarMensaje("error", `No fue posible cargar el inventario: ${error.message}`);
+  } finally {
+    $lista.setAttribute("aria-busy", "false");
+  }
 };
 
 /**
@@ -49,15 +94,35 @@ export const cargarPagina = async (pagina = 1) => {
  *  - 409: muestre el mensaje que envía la API (error.datos.mensaje).
  *  - Otro error: muestre un mensaje general.
  */
+// Si se borró la única tarjeta de una página que no es la primera, retrocede una
+const paginaTrasEliminar = () => {
+  const quedoVacia = $lista.querySelectorAll(".tarjeta").length === 1;
+  return quedoVacia && paginaActual > 1 ? paginaActual - 1 : paginaActual;
+};
+
 const alHacerClicEnLista = async (evento) => {
-  // TODO
+  const $boton = evento.target.closest(".btn-eliminar");
+  if (!$boton) return;
+
+  if (!confirm("¿Desea eliminar este equipo?")) return;
+
+  const $tarjeta = $boton.closest(".tarjeta");
+  try {
+    await eliminarEquipo($tarjeta.getAttribute("data-id"));
+    mostrarMensaje("exito", "Equipo eliminado.");
+    await cargarPagina(paginaTrasEliminar());
+  } catch (error) {
+    const mensaje = error.status === 409 ? error.datos.mensaje : "No fue posible eliminar el equipo.";
+    mostrarMensaje("error", mensaje);
+  }
 };
 
 // Parcialmente implementado: complete el TODO de los botones de paginación.
 export const iniciarListado = () => {
   $lista.addEventListener("click", alHacerClicEnLista);
 
-  // TODO [F2] Conecte #btn-anterior y #btn-siguiente con cargarPagina()
+  $btnAnterior.addEventListener("click", () => cargarPagina(paginaActual - 1));
+  $btnSiguiente.addEventListener("click", () => cargarPagina(paginaActual + 1));
 
   cargarPagina(1);
 };

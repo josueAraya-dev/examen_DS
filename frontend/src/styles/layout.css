@@ -20,7 +20,13 @@
    5. Ningún elemento debe provocar desplazamiento horizontal a 360px de ancho.
    ========================================================================= */
 
+/* Móvil: una sola columna (el formulario queda arriba por el orden del HTML) */
 .layout {
+  display: grid;
+  gap: 1.5rem;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: 1rem;
 }
 
 .panel-form {
@@ -30,13 +36,34 @@
 }
 
 .barra-listado {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .lista-equipos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
 }
 
 .paginacion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 @media (min-width: 900px) {
+  .layout {
+    grid-template-columns: 320px 1fr;
+  }
+
+  .panel-form {
+    position: sticky;
+    top: 1rem;
+    align-self: start;
+  }
 }
