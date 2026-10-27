@@ -33,7 +33,7 @@ class EquipoService
         return Equipo::query()
             ->with('categoria')
             ->when($q, function ($consulta, $q) {
-                // Se agrupan los OR para no anular el filtro de estado
+                
                 $consulta->where(function ($sub) use ($q) {
                     $sub->where('codigo', 'like', "%{$q}%")
                         ->orWhere('nombre', 'like', "%{$q}%");
